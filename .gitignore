@@ -9,3 +9,6 @@ env/
 NHMFLMarch2020Data/
 *.zip
 output/
+
+# Local Streamlit server config
+.streamlit/

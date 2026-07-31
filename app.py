@@ -128,6 +128,114 @@ def render_auto_analysis(experiment: Experiment) -> None:
         )
 
 
+def render_guide(experiments: list[Experiment] | None, selected_filename: str | None) -> None:
+    """Explain the dataset structure and walk through every action interactively."""
+
+    tab_data, tab_actions = st.tabs(["Understand the data", "Understand the commands"])
+
+    with tab_data:
+        st.markdown(
+            "Each experiment is one raw NHMFL instrument file. Columns follow a "
+            "`Prefix_timestamp` naming convention; the prefix tells you what was "
+            "measured:"
+        )
+        st.markdown(
+            "- **`Field_...`** — magnetic field (T)\n"
+            "- **`RuO_T_...` / `Cx_T_...` / `Cernox_T_...` / `DR_Temp_...`** — "
+            "temperature (K), from whichever sensor was active\n"
+            "- **`Timestamp_...`** — wall-clock acquisition time (s)\n"
+            "- **`Angle_...`** — sample rotation angle (deg), if swept\n"
+            "- **`Counter_...`** — readout/point counter, used as a default x-axis "
+            "when nothing else fits\n"
+            "- everything else is a **measurement** (e.g. resistance, voltage)"
+        )
+        st.markdown(
+            "**Auto-Analyze** takes this a step further: it looks at every numeric "
+            "column and classifies it automatically — a column that barely changes "
+            "is a *constant parameter* (e.g. a fixed bias current), a column that "
+            "changes monotonically or is swept is the *independent variable*, and "
+            "everything else still varying is a *measurement*. It then plots every "
+            "measurement against the detected independent variable."
+        )
+
+        if not experiments:
+            st.info(
+                "Load a dataset in the sidebar, then come back here and pick an "
+                "experiment below to see this detection run live on real data."
+            )
+            return
+
+        if not selected_filename:
+            st.warning("Pick an experiment in the sidebar to inspect it here.")
+            return
+
+        experiment = find_experiment(experiments, selected_filename)
+        st.subheader(f"Live detection for {selected_filename}")
+
+        columns = detect_columns(experiment)
+        st.write("**Standard-plot columns detected:**")
+        st.json(
+            {
+                "magnetic_field": columns.magnetic_field,
+                "timestamp": columns.timestamp,
+                "temperature": columns.temperature,
+                "angle": columns.angle,
+                "counter": columns.counter,
+                "primary_measurement": columns.primary_measurement,
+            }
+        )
+
+        analyzer = DatasetAnalyzer(experiment.dataframe, name=Path(experiment.filename).stem)
+        analysis = analyzer.analyze()
+        st.write("**Auto-Analyze structure detection:**")
+        st.json(
+            {
+                "independent_variable": analysis.independent_variable,
+                "category": analysis.independent_variable_category,
+                "constant_parameters": [p.column for p in analysis.constant_parameters],
+                "measurements": list(analysis.measurements),
+            }
+        )
+        st.dataframe(experiment.dataframe.head(20), width="stretch")
+
+    with tab_actions:
+        st.markdown(
+            "Every sidebar action calls the same functions the CLI (`main.py`) "
+            "uses — nothing here reimplements analysis logic, it's just a front "
+            "end over it."
+        )
+        with st.expander("Summary", expanded=True):
+            st.markdown(
+                "Computes dataset-wide statistics: temperature/field ranges, how "
+                "many experiments show oscillatory structure, the highest "
+                "signal-to-noise experiments, and the largest peak counts. "
+                "Equivalent to `python main.py --summary`."
+            )
+        with st.expander("Standard Plots"):
+            st.markdown(
+                "Renders the three standard views for one experiment: field vs "
+                "counter, field vs temperature, and timestamp vs field. "
+                "Equivalent to `python main.py --plot --experiment FILE`."
+            )
+        with st.expander("Auto-Analyze"):
+            st.markdown(
+                "Runs the automatic structure detection described in the "
+                "**Understand the data** tab and plots every detected "
+                "measurement against the detected independent variable. "
+                "Equivalent to `python main.py --auto-analyze --experiment FILE`."
+            )
+        with st.expander("Search"):
+            st.markdown(
+                "Filters and ranks experiments by temperature range, magnetic "
+                "field range, presence of oscillations, minimum peak count, or "
+                "signal-to-noise ratio. Multiple filters combine and scores "
+                "accumulate. Equivalent to `python main.py --field MIN MAX "
+                "--temperature MIN MAX --oscillations --peaks MIN --snr --top N`."
+            )
+        st.markdown("**Full CLI flag reference:**")
+        st.markdown(COMMAND_REFERENCE)
+
+
 def search_results_table(results: list[SearchResult]) -> pd.DataFrame:
     rows = []
     for result in results:
@@ -189,12 +297,13 @@ experiments = st.session_state.experiments
 st.sidebar.divider()
 st.sidebar.header("Action")
 action = st.sidebar.radio(
-    "Choose an action", ["Summary", "Standard Plots", "Auto-Analyze", "Search"]
+    "Choose an action",
+    ["Guide", "Summary", "Standard Plots", "Auto-Analyze", "Search"],
 )
 
 filenames = [Path(e.filename).name for e in experiments] if experiments else []
 selected_filename = None
-if action in ("Standard Plots", "Auto-Analyze") and filenames:
+if action in ("Guide", "Standard Plots", "Auto-Analyze") and filenames:
     selected_filename = st.sidebar.selectbox("Experiment", filenames)
 
 use_field = use_temperature = use_oscillations = use_peaks = use_snr = False
@@ -253,7 +362,9 @@ st.sidebar.code(" ".join(cli_parts), language="bash")
 with st.sidebar.expander("Command reference"):
     st.markdown(COMMAND_REFERENCE)
 
-if experiments is None:
+if action == "Guide":
+    render_guide(experiments, selected_filename)
+elif experiments is None:
     st.info("Enter a dataset path in the sidebar and click **Load dataset** to begin.")
 else:
     if action == "Summary":
