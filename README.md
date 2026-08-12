@@ -1,7 +1,8 @@
 # NHMFL Condensed Matter Analysis Platform
 
-Command-line tools for loading, plotting, analyzing, and searching condensed
-matter experiment data from NHMFL/Tallahassee measurement campaigns.
+Tools for loading, plotting, analyzing, and searching condensed matter
+experiment data from NHMFL/Tallahassee measurement campaigns: a command-line
+interface, a FastAPI backend, and a React web dashboard.
 
 ## What This Project Does
 
@@ -24,6 +25,27 @@ matter experiment data from NHMFL/Tallahassee measurement campaigns.
 - `signal_processing.py` provides reusable analysis functions.
 - `search_engine.py` searches and ranks experiments.
 - `main.py` provides the command-line interface.
+- `api.py` provides a FastAPI backend (REST API) over the same modules.
+- `frontend/` is a React + Vite web dashboard that talks to `api.py`. See
+  `frontend/README.md` for setup.
+
+## Web Dashboard
+
+Run the backend and frontend in two terminals:
+
+```bash
+# Terminal 1: API (from the repo root)
+python3 -m pip install -r requirements.txt
+uvicorn api:app --reload
+
+# Terminal 2: frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Then open `http://localhost:5173`. The dashboard lets you load a dataset,
+view the summary, search experiments, and browse per-experiment plots.
 
 ## Setup
 
