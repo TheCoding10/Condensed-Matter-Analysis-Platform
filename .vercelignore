@@ -1,0 +1,10 @@
+# This is a frontend-only Vercel deployment (see vercel.json).
+# Keep the Python backend out of the upload entirely so Vercel's
+# framework/runtime auto-detection never sees it and tries to build
+# it as a Python serverless function.
+*.py
+requirements.txt
+__pycache__/
+output/
+NHMFLMarch2020Data/
+*.zip
