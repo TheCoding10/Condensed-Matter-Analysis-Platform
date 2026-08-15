@@ -1,5 +1,6 @@
 import type {
   AutoAnalyzeResponse,
+  DatasetAliasesResponse,
   DefaultPathResponse,
   ExperimentGuide,
   ExperimentsResponse,
@@ -56,6 +57,8 @@ export function toPlotUrl(url: string | null): string | null {
 
 export const api = {
   defaultPath: () => request<DefaultPathResponse>('/api/dataset/default-path'),
+
+  datasetAliases: () => request<DatasetAliasesResponse>('/api/dataset/aliases'),
 
   loadDataset: (path?: string) =>
     request<LoadDatasetResponse>('/api/dataset/load', {

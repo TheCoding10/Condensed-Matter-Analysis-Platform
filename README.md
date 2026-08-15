@@ -15,6 +15,39 @@ interface, a FastAPI backend, and a React web dashboard.
   oscillations, and signal-to-noise ratio.
 - Exports search results to CSV.
 
+## How Automatic Dataset Analysis Works
+
+Every experiment file is a table of columns, and `dataset_analyzer.py`
+figures out what each column represents without being told:
+
+1. **What is the x-axis (independent variable)?** This is whatever was
+   intentionally swept during the run. Column names are checked in priority
+   order:
+   1. Magnetic Field
+   2. Angle
+   3. Temperature
+
+   If none of those names are present, it falls back to statistics: whichever
+   column changes the most smoothly and monotonically, has a large numeric
+   range, and has many unique values is treated as the x-axis.
+
+2. **What is constant?** Some columns barely move during a run — temperature
+   is a common example, since it is usually held steady during a field
+   sweep. If a column's values do not vary much relative to their average,
+   it is classified as a constant parameter instead of something to plot,
+   and its average (plus min/max/standard deviation) is recorded as
+   metadata rather than plotted.
+
+3. **What are the measurements?** Everything left over — not the x-axis,
+   not constant, not acquisition bookkeeping like a timestamp — is a
+   measured quantity. Typical examples are Frequency, Counter, and
+   Resistance, but detection is not hardcoded to those names; any
+   remaining numeric column qualifies.
+
+4. **Generate the plots.** Once the x-axis and measurements are identified,
+   one plot is generated for each: measurement vs. the independent
+   variable, saved as a publication-quality PNG in `output/auto_plots/`.
+
 ## Project Files
 
 - `experiment_loader.py` loads raw experiment files.
@@ -80,6 +113,30 @@ installed. If plain `python3` cannot import pandas, use:
 
 The loader supports both the 2020 schema (`RuO_T`, `Counter`, `Angle`) and the
 2022 schema (`FQ1`, `FQ2`, `Cernox_T`, `DR_Temp`, optional angle).
+
+## All Command-Line Options
+
+| Flag | Argument(s) | Description |
+| --- | --- | --- |
+| `--dataset` | `PATH` | Path to an extracted dataset folder or ZIP archive. Defaults to `NHMFLMarch2020Data/` or the default ZIP in `~/Downloads/` if omitted. |
+| `--summary` | | Generate a dataset-level summary report (temperature/field ranges, oscillation count, top SNR, top peak counts). |
+| `--plot` | | Generate the standard field/temperature/counter plots for matching experiments. |
+| `--auto-analyze` | | Automatically detect the independent variable, constant parameters, and measurements for matching experiments, then plot every measurement against the detected independent variable. |
+| `--temperature` | `MIN MAX` | Find experiments overlapping a temperature range. |
+| `--field` | `MIN MAX` | Find experiments overlapping a magnetic-field range. |
+| `--oscillations` | | Find experiments containing oscillatory signal structure. |
+| `--peaks` | `MIN` | Find experiments with more than `MIN` detected peaks. |
+| `--snr` | | Rank experiments by signal-to-noise ratio. |
+| `--top` | `N` (default `10`) | Limit displayed and exported search results. |
+| `--experiment` | `FILE` | Restrict analysis or plotting to one filename, e.g. `Agosta.001.txt`. |
+| `--export` | | Export search results or the summary report to CSV in `output/results/`. |
+| `--verbose` | | Enable verbose (debug-level) logging. |
+
+Search flags (`--temperature`, `--field`, `--oscillations`, `--peaks`,
+`--snr`) can be combined; matching experiments are merged and ranked by
+combined score. `--plot` and `--auto-analyze` apply to whatever experiments
+were selected by `--experiment` or a search; with no selection, they apply
+to the whole loaded dataset.
 
 ## Example Commands
 
@@ -170,6 +227,12 @@ Automatically detect structure and plot every measurement for one experiment:
 /opt/anaconda3/bin/python main.py --experiment Agosta.001.txt --auto-analyze
 ```
 
+Search high-field experiments and auto-analyze the top 5:
+
+```bash
+/opt/anaconda3/bin/python main.py --field 0 16 --top 5 --auto-analyze
+```
+
 ## Tallahassee June 2022 Commands
 
 Use this pattern:
@@ -231,6 +294,12 @@ Export search results to CSV:
 
 ```bash
 /opt/anaconda3/bin/python main.py --dataset /Users/prayasthapa/Downloads/Tallahassee2022June --field 20 28 --top 20 --export
+```
+
+Automatically detect structure and plot every measurement for one experiment:
+
+```bash
+/opt/anaconda3/bin/python main.py --dataset /Users/prayasthapa/Downloads/Tallahassee2022June --experiment Clark_SCM4.007.txt --auto-analyze
 ```
 
 ## Outputs

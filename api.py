@@ -39,6 +39,18 @@ cli.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 cli.PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 cli.AUTO_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Short names researchers can type or click instead of a full filesystem path.
+DATASET_ALIASES: dict[str, dict[str, str]] = {
+    "nhmfl2020": {
+        "label": "NHMFL March 2020",
+        "path": "~/Downloads/NHMFLMarch2020Data",
+    },
+    "tallahassee2022": {
+        "label": "Tallahassee June 2022",
+        "path": "~/Downloads/Tallahassee2022June",
+    },
+}
+
 app = FastAPI(title="NHMFL Condensed Matter Analysis API")
 
 app.add_middleware(
@@ -123,11 +135,27 @@ def default_path():
     return {"path": str(cli.DEFAULT_DATASET_PATH)}
 
 
+@app.get("/api/dataset/aliases")
+def dataset_aliases():
+    return {
+        "aliases": [
+            {"name": name, "label": info["label"], "path": info["path"]}
+            for name, info in DATASET_ALIASES.items()
+        ]
+    }
+
+
+def _resolve_requested_path(raw_path: str) -> Path:
+    alias = DATASET_ALIASES.get(raw_path.strip().lower())
+    resolved = alias["path"] if alias else raw_path
+    return Path(resolved).expanduser()
+
+
 @app.post("/api/dataset/load")
 def load_dataset(request: LoadDatasetRequest):
     try:
         requested_path = (
-            Path(request.path).expanduser() if request.path else cli.resolve_dataset_path(None)
+            _resolve_requested_path(request.path) if request.path else cli.resolve_dataset_path(None)
         )
         load_result = cli.load_dataset(requested_path)
     except (FileNotFoundError, ValueError) as error:

@@ -118,6 +118,16 @@ export interface DefaultPathResponse {
   path: string
 }
 
+export interface DatasetAlias {
+  name: string
+  label: string
+  path: string
+}
+
+export interface DatasetAliasesResponse {
+  aliases: DatasetAlias[]
+}
+
 export interface ApiErrorBody {
   detail: string
 }
