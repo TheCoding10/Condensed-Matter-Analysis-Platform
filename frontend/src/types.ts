@@ -24,6 +24,7 @@ export interface AutoAnalyzeStructure {
   category: string | null
   constant_parameters: string[]
   measurements: string[]
+  secondary_sweeps: string[]
 }
 
 export interface ExperimentGuide {
@@ -53,13 +54,26 @@ export interface ConstantParameter {
 export interface AutoAnalyzePlot {
   measurement: string
   independent_variable: string
+  kind: 'measurement' | 'oscillation_fft'
   url: string
+}
+
+export interface OscillationResult {
+  signal: string
+  detected: boolean
+  dominant_frequency_tesla: number | null
+  peak_sharpness: number | null
+  peak_concentration: number
+  field_window: [number, number]
+  sweep_direction: string
 }
 
 export interface AutoAnalyzeResponse {
   x_label: string | null
   constant_parameters: ConstantParameter[]
   measurements: string[]
+  secondary_sweeps: string[]
+  oscillations: OscillationResult[]
   plots: AutoAnalyzePlot[]
 }
 

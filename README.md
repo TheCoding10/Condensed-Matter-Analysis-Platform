@@ -17,36 +17,47 @@ interface, a FastAPI backend, and a React web dashboard.
 
 ## How Automatic Dataset Analysis Works
 
-Every experiment file is a table of columns, and `dataset_analyzer.py`
-figures out what each column represents without being told:
+`dataset_analyzer.py` decides what to plot the way the group reads the data:
+changes in the material show up in a resonant **frequency**, measured
+against a **swept control parameter**.
 
-1. **What is the x-axis (independent variable)?** This is whatever was
-   intentionally swept during the run. Column names are checked in priority
-   order:
-   1. Magnetic Field
-   2. Angle
-   3. Temperature
+1. **Y-axis: the frequency signal.** In pulsed-field runs this is the
+   frequency itself (`FQ1`, `FQ2`); in DC-field runs it is called `Counter`.
+   These are always plotted, even when the shift is only parts per million.
+   Control parameters (field, angle, temperature) and thermometer readings
+   (`Cernox_R`, `SmpCrnx_R`) are never put on the y-axis. Only when a run
+   has no frequency column does it fall back to other measured columns.
 
-   If none of those names are present, it falls back to statistics: whichever
-   column changes the most smoothly and monotonically, has a large numeric
-   range, and has many unique values is treated as the x-axis.
+2. **X-axis: what was swept.** Candidates are checked in this order:
+   1. Magnetic field (`Field`)
+   2. Angle (`Angle`, or rotator `Steps`)
+   3. Temperature (rarely; `RuO_T`, `Cx_T`, `Cernox_T`, `DR_Temp`, ...)
 
-2. **What is constant?** Some columns barely move during a run — temperature
-   is a common example, since it is usually held steady during a field
-   sweep. If a column's values do not vary much relative to their average,
-   it is classified as a constant parameter instead of something to plot,
-   and its average (plus min/max/standard deviation) is recorded as
-   metadata rather than plotted.
+   A control parameter counts as *swept* only if it moves over a real range
+   (≥ 0.5 T, ≥ 2°, ≥ 20 rotator steps, or ≥ 5% of the temperature) **and**
+   fills that range continuously. A one-off jump (e.g. the rotator moved
+   once at the end of a run) is not a sweep. If nothing was swept, the
+   signal is plotted against time.
 
-3. **What are the measurements?** Everything left over — not the x-axis,
-   not constant, not acquisition bookkeeping like a timestamp — is a
-   measured quantity. Typical examples are Frequency, Counter, and
-   Resistance, but detection is not hardcoded to those names; any
-   remaining numeric column qualifies.
+3. **Fixed parameters.** Control parameters that were not swept are
+   reported with their average value and printed on each plot. Ones that
+   drifted during the run (typically the thermometer during a field sweep)
+   are listed as "also changed" but not plotted.
 
-4. **Generate the plots.** Once the x-axis and measurements are identified,
-   one plot is generated for each: measurement vs. the independent
-   variable, saved as a publication-quality PNG in `output/auto_plots/`.
+4. **Quantum oscillations.** Oscillations only appear when the field is
+   swept, so for field sweeps `quantum_oscillations.py` repeats the group's
+   Igor `FFThan` analysis (from `ETNH4Mar2020SdH.pxp`) automatically:
+   take one sweep direction in the top third of the field range, convert to
+   1/B, interpolate onto a uniform grid, subtract a 5th-order polynomial
+   background, and FFT. The x-axis of the spectrum is the oscillation
+   frequency in tesla. A peak is reported as an oscillation when it is
+   sharp (≥ 30× the spectrum a few resolution widths away) and holds ≥ 20%
+   of the residual power together with its harmonics. These thresholds were
+   calibrated by eye on the March 2020 and June 2022 sweeps; for example,
+   the ETNH4 runs Agosta.332–371 give ~576 T.
+
+Instrument "no reading" values (~9.91e37) and zero-frequency dropouts are
+removed before any of this runs. Plots go to `output/auto_plots/`.
 
 ## Project Files
 
@@ -56,6 +67,8 @@ figures out what each column represents without being told:
   constant parameters, and measurements for a dataset, then generates plots
   in `output/auto_plots/`.
 - `signal_processing.py` provides reusable analysis functions.
+- `quantum_oscillations.py` finds 1/B-periodic (SdH/dHvA) oscillations in
+  field sweeps and plots the residual and its FFT.
 - `search_engine.py` searches and ranks experiments.
 - `main.py` provides the command-line interface.
 - `api.py` provides a FastAPI backend (REST API) over the same modules.

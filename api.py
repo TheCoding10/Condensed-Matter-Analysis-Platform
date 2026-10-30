@@ -7,6 +7,7 @@ up for the command line.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -198,6 +199,7 @@ def experiment_guide(filename: str):
             "category": analysis.independent_variable_category,
             "constant_parameters": [p.column for p in analysis.constant_parameters],
             "measurements": list(analysis.measurements),
+            "secondary_sweeps": list(analysis.secondary_sweeps),
         },
         "preview_columns": [str(c) for c in preview.columns],
         "preview_rows": _records(preview),
@@ -241,6 +243,7 @@ def auto_analyze(filename: str):
     analyzer = DatasetAnalyzer(experiment.dataframe, name=name)
     analysis = analyzer.analyze()
     plots = analyzer.generate_plots(output_dir=cli.AUTO_PLOTS_DIR)
+    oscillations = analyzer.analyze_oscillations()
 
     return {
         "x_label": analysis.independent_variable_category or analysis.independent_variable,
@@ -255,10 +258,25 @@ def auto_analyze(filename: str):
             for parameter in analysis.constant_parameters
         ],
         "measurements": list(analysis.measurements),
+        "secondary_sweeps": list(analysis.secondary_sweeps),
+        "oscillations": [
+            {
+                "signal": result.signal_column,
+                "detected": result.detected,
+                "dominant_frequency_tesla": result.dominant_frequency_tesla,
+                # inf (a perfectly isolated peak) is not valid JSON.
+                "peak_sharpness": result.peak_sharpness if math.isfinite(result.peak_sharpness) else None,
+                "peak_concentration": result.peak_concentration,
+                "field_window": list(result.field_window),
+                "sweep_direction": result.sweep_direction,
+            }
+            for result in oscillations
+        ],
         "plots": [
             {
                 "measurement": plot.measurement,
                 "independent_variable": plot.independent_variable,
+                "kind": plot.kind,
                 "url": _plot_url(plot.path),
             }
             for plot in plots

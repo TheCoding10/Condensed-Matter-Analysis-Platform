@@ -85,10 +85,10 @@ def parse_args() -> argparse.Namespace:
         "--auto-analyze",
         action="store_true",
         help=(
-            "Automatically detect the independent variable, constant "
-            "parameters, and measurements for matching experiments, then "
-            "plot every measurement against the detected independent "
-            "variable."
+            "Automatically pick the x-axis (swept field, then angle, then "
+            "temperature), report fixed parameters, plot the frequency "
+            "signal (Counter / FQ) against it, and run a 1/B FFT "
+            "oscillation search on field sweeps."
         ),
     )
     parser.add_argument(

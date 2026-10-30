@@ -263,9 +263,34 @@ function AutoAnalyzeView({ filename }: { filename: string }) {
         </div>
       </Card>
 
+      {analysis.oscillations.length > 0 && (
+        <Card>
+          <SectionTitle>Quantum oscillations (FFT in 1/B)</SectionTitle>
+          <div className="mt-3">
+            <Table columns={['Signal', 'Result', 'Strongest peak (T)', 'Sharpness', 'Field window (T)', 'Sweep']}>
+              {analysis.oscillations.map((result) => (
+                <tr key={result.signal}>
+                  <td className="px-3 py-2 font-mono text-xs">{result.signal}</td>
+                  <td className="px-3 py-2">{result.detected ? 'Detected' : 'None found'}</td>
+                  <td className="px-3 py-2 tabular-nums">{formatNumber(result.dominant_frequency_tesla)}</td>
+                  <td className="px-3 py-2 tabular-nums">{formatNumber(result.peak_sharpness)}</td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatNumber(result.field_window[0])}–{formatNumber(result.field_window[1])}
+                  </td>
+                  <td className="px-3 py-2">{result.sweep_direction}</td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </Card>
+      )}
+
       <PlotGrid
         plots={analysis.plots.map((plot) => ({
-          title: `${plot.measurement} vs ${plot.independent_variable}`,
+          title:
+            plot.kind === 'oscillation_fft'
+              ? `${plot.measurement} oscillations vs 1/B`
+              : `${plot.measurement} vs ${plot.independent_variable}`,
           url: plot.url,
         }))}
       />
