@@ -263,12 +263,13 @@ function AutoAnalyzeView({ filename }: { filename: string }) {
         </div>
       </Card>
 
-      {analysis.oscillations.length > 0 && (
+      {/* Older backends omit `oscillations`; treat that as none. */}
+      {(analysis.oscillations ?? []).length > 0 && (
         <Card>
           <SectionTitle>Quantum oscillations (FFT in 1/B)</SectionTitle>
           <div className="mt-3">
             <Table columns={['Signal', 'Result', 'Strongest peak (T)', 'Sharpness', 'Field window (T)', 'Sweep']}>
-              {analysis.oscillations.map((result) => (
+              {(analysis.oscillations ?? []).map((result) => (
                 <tr key={result.signal}>
                   <td className="px-3 py-2 font-mono text-xs">{result.signal}</td>
                   <td className="px-3 py-2">{result.detected ? 'Detected' : 'None found'}</td>

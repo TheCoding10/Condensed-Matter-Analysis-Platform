@@ -24,7 +24,7 @@ export interface AutoAnalyzeStructure {
   category: string | null
   constant_parameters: string[]
   measurements: string[]
-  secondary_sweeps: string[]
+  secondary_sweeps?: string[]
 }
 
 export interface ExperimentGuide {
@@ -54,7 +54,7 @@ export interface ConstantParameter {
 export interface AutoAnalyzePlot {
   measurement: string
   independent_variable: string
-  kind: 'measurement' | 'oscillation_fft'
+  kind?: 'measurement' | 'oscillation_fft'
   url: string
 }
 
@@ -72,8 +72,8 @@ export interface AutoAnalyzeResponse {
   x_label: string | null
   constant_parameters: ConstantParameter[]
   measurements: string[]
-  secondary_sweeps: string[]
-  oscillations: OscillationResult[]
+  secondary_sweeps?: string[]
+  oscillations?: OscillationResult[]
   plots: AutoAnalyzePlot[]
 }
 
