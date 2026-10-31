@@ -9,3 +9,5 @@ env/
 NHMFLMarch2020Data/
 *.zip
 output/
+.vercel
+.env*.local
