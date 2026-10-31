@@ -40,8 +40,15 @@ def list_files(prefix: str) -> list[str]:
     return sorted(
         path
         for path in paths
-        if PurePosixPath(path).parent == folder and path.endswith(".txt")
+        if PurePosixPath(path).parent == folder and _is_data_name(path)
     )
+
+
+def _is_data_name(path: str) -> bool:
+    # Same rule as main._is_data_file: ".txt" or a numeric run suffix
+    # like ".006" (some instrument files have no ".txt").
+    suffix = PurePosixPath(path).suffix.lower()
+    return suffix == ".txt" or suffix[1:].isdigit()
 
 
 def load_file(prefix: str, filename: str) -> Experiment:
