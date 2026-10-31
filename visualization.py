@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import os
 from pathlib import Path
 import re
 from typing import Iterable
@@ -18,7 +19,7 @@ from experiment_loader import Experiment
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_PLOTS_DIR = Path("output") / "plots"
-PUBLICATION_DPI = 300
+PUBLICATION_DPI = int(os.environ.get("PLOT_DPI", "300"))
 FIGURE_SIZE = (7.0, 4.8)
 
 

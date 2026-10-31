@@ -27,6 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import logging
+import os
 from pathlib import Path
 import re
 from typing import Iterable
@@ -45,7 +46,7 @@ from quantum_oscillations import (
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_OUTPUT_DIR = Path("output") / "auto_plots"
-PUBLICATION_DPI = 300
+PUBLICATION_DPI = int(os.environ.get("PLOT_DPI", "300"))
 FIGURE_SIZE = (7.0, 4.8)
 
 # A column is treated as constant when its coefficient of variation

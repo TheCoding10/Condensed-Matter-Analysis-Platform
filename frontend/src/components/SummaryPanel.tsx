@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, ApiError } from '../api'
+import { api, ApiError, saveExport } from '../api'
 import type { SummaryResponse } from '../types'
 import { formatNumber, formatRange } from '../lib/format'
 import { Button, Card, EmptyState, ErrorBanner, SectionTitle, Spinner, StatCard, Table } from './common'
@@ -27,8 +27,7 @@ export function SummaryPanel({ datasetLoaded }: { datasetLoaded: boolean }) {
   async function handleExport() {
     setExportMessage(null)
     try {
-      const { path } = await api.exportSummary()
-      setExportMessage(`Exported to ${path}`)
+      setExportMessage(saveExport(await api.exportSummary()))
     } catch (err) {
       setExportMessage(err instanceof ApiError ? err.message : 'Export failed.')
     }

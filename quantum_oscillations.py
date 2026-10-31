@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -61,7 +62,7 @@ PEAK_DIP_FRACTION = 0.5
 SPIKE_WINDOW_POINTS = 11
 SPIKE_THRESHOLD_MADS = 8.0
 
-PUBLICATION_DPI = 300
+PUBLICATION_DPI = int(os.environ.get("PLOT_DPI", "300"))
 FIGURE_SIZE = (7.0, 4.8)
 
 

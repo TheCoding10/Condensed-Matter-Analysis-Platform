@@ -1,6 +1,12 @@
 // Types mirroring the FastAPI response/request shapes in ../api.py
 
+export interface AuthCheckResponse {
+  required: boolean
+  ok: boolean
+}
+
 export interface LoadDatasetResponse {
+  dataset?: string
   count: number
   skipped: number
   filenames: string[]
@@ -126,6 +132,8 @@ export interface SearchResponse {
 
 export interface ExportResponse {
   path: string
+  filename?: string
+  content?: string
 }
 
 export interface DefaultPathResponse {

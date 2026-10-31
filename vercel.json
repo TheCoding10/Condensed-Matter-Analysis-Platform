@@ -1,7 +1,27 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "installCommand": "echo 'Root install skipped — buildCommand installs inside frontend/'",
-  "outputDirectory": "frontend/dist",
-  "framework": null
+  "services": {
+    "web": {
+      "root": "frontend/",
+      "framework": "vite",
+      "installCommand": "npm ci",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
+    },
+    "backend": {
+      "root": "./",
+      "framework": "fastapi",
+      "entrypoint": "api:app",
+      "functions": {
+        "api.py": {
+          "maxDuration": 300,
+          "excludeFiles": "{frontend/**,output/**,.mypy_cache/**,__pycache__/**,**/*.md}"
+        }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
 }

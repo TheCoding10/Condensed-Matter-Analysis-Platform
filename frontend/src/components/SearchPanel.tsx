@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api, ApiError } from '../api'
+import { api, ApiError, saveExport } from '../api'
 import type { SearchRequest, SearchResultSummary } from '../types'
 import { formatNumber, formatRange } from '../lib/format'
 import { Button, Card, EmptyState, ErrorBanner, SectionTitle, Spinner, Table } from './common'
@@ -23,6 +23,7 @@ export function SearchPanel({ datasetLoaded }: { datasetLoaded: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
+  const [lastRequest, setLastRequest] = useState<SearchRequest | null>(null)
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -54,6 +55,7 @@ export function SearchPanel({ datasetLoaded }: { datasetLoaded: boolean }) {
     try {
       const response = await api.search(request)
       setResults(response.results)
+      setLastRequest(request)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Search failed.')
     } finally {
@@ -64,8 +66,7 @@ export function SearchPanel({ datasetLoaded }: { datasetLoaded: boolean }) {
   async function handleExport() {
     setExportMessage(null)
     try {
-      const { path } = await api.exportSearch()
-      setExportMessage(`Exported to ${path}`)
+      setExportMessage(saveExport(await api.exportSearch(lastRequest ?? undefined)))
     } catch (err) {
       setExportMessage(err instanceof ApiError ? err.message : 'Export failed.')
     }

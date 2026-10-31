@@ -1,10 +1,7 @@
-# This is a frontend-only Vercel deployment (see vercel.json).
-# Keep the Python backend out of the upload entirely so Vercel's
-# framework/runtime auto-detection never sees it and tries to build
-# it as a Python serverless function.
-*.py
-requirements.txt
+# Keep local data and generated output out of the Vercel upload. The hosted
+# backend reads experiment data from the private Hugging Face dataset.
 __pycache__/
+.mypy_cache/
 output/
 NHMFLMarch2020Data/
 *.zip
